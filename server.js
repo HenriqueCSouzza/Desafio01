@@ -4,12 +4,35 @@ const server = express();
 server.use(express.json())
 
 const projects=[]
+let count=0;
+
+//Middleware
+server.use((req,res,next)=>{
+    count++;
+
+    console.log(`Metodo: ${req.method}; URL:${req.url}`)
+    
+    console.log(`qtd:${count}`)
+    
+    return next();
+})
+
+function checkProjectExists(req,res,next){
+    const {id} = req.params
+    const project = projects.find(project => project.id == id)
+    
+    if(!project){
+        return res.status(400).json({ erros:'User name is required'})
+    }    
+    
+    return next();
+}
 
 server.get('/projects',(req,res)=>{
     return res.json(projects);
 })
 
-server.get('/projects/:id',(req,res)=>{
+server.get('/projects/:id',checkProjectExists,(req,res)=>{
     const {id} = req.params
 
     const project = projects.find(project => project.id == id);
@@ -31,7 +54,7 @@ server.post('/projects',(req,res)=>{
     return res.json(projects);
 })
 
-server.post('/projects/:id/task',(req,res)=>{
+server.post('/projects/:id/task',checkProjectExists,(req,res)=>{
     const {id} = req.params
     const {title} = req.body
 
@@ -43,7 +66,7 @@ server.post('/projects/:id/task',(req,res)=>{
     return res.json(projects);
 })
 
-server.put('/projects/:id',(req,res)=>{
+server.put('/projects/:id',checkProjectExists,(req,res)=>{
     const {id} = req.param
     const {title} = req.body
 
@@ -55,4 +78,13 @@ server.put('/projects/:id',(req,res)=>{
     return res.json(project);
 })
 
+server.delete('/projects/:id', checkProjectExists, (req, res) => {
+    const { id } = req.params;
+  
+    const projectIndex = projects.findIndex(p => p.id == id);
+  
+    projects.splice(projectIndex, 1);
+  
+    return res.send();
+});
 server.listen('3000')
